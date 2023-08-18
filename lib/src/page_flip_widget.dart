@@ -20,6 +20,7 @@ class PageFlipWidget extends StatefulWidget {
     this.transformationController,
     this.onTapPage,
     this.onDoubleTapPage,
+    this.onDoubleTapDown,
     required this.currentPage,
   }) : super(key: key);
 
@@ -36,6 +37,7 @@ class PageFlipWidget extends StatefulWidget {
   final double maxScale;
   final VoidCallback? onTapPage;
   final VoidCallback? onDoubleTapPage;
+  final void Function(TapDownDetails)? onDoubleTapDown;
   final Function(int) currentPage;
 
   @override
@@ -240,6 +242,7 @@ class PageFlipWidgetState extends State<PageFlipWidget>
       builder: (context, dimens) => GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTapPage,
+        onDoubleTapDown: widget.onDoubleTapDown,
         onDoubleTap: widget.onDoubleTapPage,
         onTapDown: (details) {},
         onTapUp: (details) {},
