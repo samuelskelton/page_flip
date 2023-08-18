@@ -23,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
         lastPage: Container(
             color: Colors.white,
             child: const Center(child: Text('Last Page!'))),
+        currentPage: (int) {},
         children: <Widget>[
           for (var i = 0; i < 10; i++) DemoPage(page: i),
         ],
