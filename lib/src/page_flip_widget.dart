@@ -43,7 +43,7 @@ class PageFlipWidget extends StatefulWidget {
 }
 
 class PageFlipWidgetState extends State<PageFlipWidget>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int pageNumber = 0;
   List<Widget> pages = [];
   final List<AnimationController> _controllers = [];
