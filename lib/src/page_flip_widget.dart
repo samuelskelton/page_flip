@@ -50,6 +50,10 @@ class PageFlipWidgetState extends State<PageFlipWidget>
   List<Widget> pages = [];
   final List<AnimationController> _controllers = [];
   bool? _isForward;
+  double _scale = 0.0;
+  double _previousScale = 0.0;
+  Offset _offset = const Offset(0, 0);
+  Offset _previousOffset = const Offset(0, 0);
 
   @override
   void didUpdateWidget(PageFlipWidget oldWidget) {
@@ -242,28 +246,34 @@ class PageFlipWidgetState extends State<PageFlipWidget>
       builder: (context, dimens) => GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTapPage,
+        onScaleStart: (details) {
+          _previousScale = _scale;
+          _previousOffset = details.focalPoint;
+        },
+        onScaleUpdate: (details) {
+          setState(() {
+            _scale = _previousScale * details.scale;
+            _offset += details.focalPoint - _previousOffset;
+            _previousOffset = details.focalPoint;
+          });
+        },
         onDoubleTapDown: widget.onDoubleTapDown,
         onDoubleTap: widget.onDoubleTapPage,
-        onTapDown: (details) {},
-        onTapUp: (details) {},
-        onPanDown: (details) {},
-        onPanEnd: (details) {},
-        onTapCancel: () {},
         onHorizontalDragCancel: () => _isForward = null,
         onHorizontalDragUpdate: (details) => _turnPage(details, dimens),
         onHorizontalDragEnd: (details) => _onDragFinish(),
-        child: InteractiveViewer(
-          maxScale: widget.maxScale,
-          clipBehavior: widget.clipBehavior,
-          transformationController: widget.transformationController,
-          child: Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              if (widget.lastPage != null) ...[
-                widget.lastPage!,
+        child: Transform.translate(
+          offset: _offset,
+          child: Transform.scale(
+            scale: _scale,
+            child: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                if (pages.isNotEmpty)
+                  ...pages
+                else ...[const SizedBox.shrink()],
               ],
-              if (pages.isNotEmpty) ...pages else ...[const SizedBox.shrink()],
-            ],
+            ),
           ),
         ),
       ),
