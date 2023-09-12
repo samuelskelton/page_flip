@@ -9,14 +9,14 @@ class PageFlipWidget extends StatefulWidget {
     Key? key,
     this.index,
     this.duration = const Duration(milliseconds: 450),
-    this.cutoffForward = 0.8,
-    this.cutoffPrevious = 0.1,
+    this.cutoffForward = 0.6,
+    this.cutoffPrevious = 0.3,
     this.backgroundColor = const Color(0xFFFFFFCC),
     required this.children,
     this.initialIndex = 0,
     this.lastPage,
     this.clipBehavior = Clip.none,
-    this.maxScale = 4.0,
+    this.maxScale = 5.0,
     this.transformationController,
     this.onTapPage,
     this.onDoubleTapPage,
@@ -50,10 +50,6 @@ class PageFlipWidgetState extends State<PageFlipWidget>
   List<Widget> pages = [];
   final List<AnimationController> _controllers = [];
   bool? _isForward;
-  double _scale = 0.0;
-  double _previousScale = 0.0;
-  Offset _offset = const Offset(0, 0);
-  Offset _previousOffset = const Offset(0, 0);
 
   @override
   void didUpdateWidget(PageFlipWidget oldWidget) {
@@ -180,6 +176,42 @@ class PageFlipWidgetState extends State<PageFlipWidget>
     currentPage.value = -1;
   }
 
+  void turnPageForward() {
+    currentPage.value = pageNumber;
+    currentWidget.value = Container();
+    _isForward = true;
+    if (_isForward == true || pageNumber == 0) {
+      int pageSize = widget.lastPage != null ? pages.length : pages.length - 1;
+      if (pageNumber != pageSize) {
+        while (_controllers[pageNumber].value >= widget.cutoffForward) {
+          if (!_isLastPage) {
+            _controllers[pageNumber].value += -0.005;
+          }
+        }
+      }
+    }
+    _onDragFinish();
+    _isForward = null;
+  }
+
+  void turnPagePrevious() {
+    currentPage.value = pageNumber;
+    currentWidget.value = Container();
+    _isForward = false;
+    if (_isForward == true || pageNumber == 0) {
+      int pageSize = widget.lastPage != null ? pages.length : pages.length - 1;
+      if (pageNumber != pageSize) {
+        while (_controllers[pageNumber].value <= widget.cutoffPrevious) {
+          if (!_isLastPage) {
+            _controllers[pageNumber].value += 0.005;
+          }
+        }
+      }
+    }
+    _onDragFinish();
+    _isForward = null;
+  }
+
   Future nextPage() async {
     await _controllers[pageNumber].reverse();
     if (mounted) {
@@ -246,34 +278,28 @@ class PageFlipWidgetState extends State<PageFlipWidget>
       builder: (context, dimens) => GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTapPage,
-        onScaleStart: (details) {
-          _previousScale = _scale;
-          _previousOffset = details.focalPoint;
-        },
-        onScaleUpdate: (details) {
-          setState(() {
-            _scale = _previousScale * details.scale;
-            _offset += details.focalPoint - _previousOffset;
-            _previousOffset = details.focalPoint;
-          });
-        },
         onDoubleTapDown: widget.onDoubleTapDown,
         onDoubleTap: widget.onDoubleTapPage,
+        onTapDown: (details) {},
+        onTapUp: (details) {},
+        onPanDown: (details) {},
+        onPanEnd: (details) {},
+        onTapCancel: () {},
         onHorizontalDragCancel: () => _isForward = null,
         onHorizontalDragUpdate: (details) => _turnPage(details, dimens),
         onHorizontalDragEnd: (details) => _onDragFinish(),
-        child: Transform.translate(
-          offset: _offset,
-          child: Transform.scale(
-            scale: _scale,
-            child: Stack(
-              fit: StackFit.expand,
-              children: <Widget>[
-                if (pages.isNotEmpty)
-                  ...pages
-                else ...[const SizedBox.shrink()],
+        child: InteractiveViewer(
+          maxScale: widget.maxScale,
+          clipBehavior: widget.clipBehavior,
+          transformationController: widget.transformationController,
+          child: Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              if (widget.lastPage != null) ...[
+                widget.lastPage!,
               ],
-            ),
+              if (pages.isNotEmpty) ...pages else ...[const SizedBox.shrink()],
+            ],
           ),
         ),
       ),
