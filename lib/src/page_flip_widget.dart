@@ -14,6 +14,7 @@ class PageFlipWidget extends StatefulWidget {
     this.backgroundColor = const Color(0xFFFFFFCC),
     required this.children,
     this.initialIndex = 0,
+    this.disableSwipe = false,
     this.lastPage,
     this.clipBehavior = Clip.none,
     this.maxScale = 5.0,
@@ -32,6 +33,7 @@ class PageFlipWidget extends StatefulWidget {
   final Widget? lastPage;
   final double cutoffForward;
   final double cutoffPrevious;
+  final bool disableSwipe;
   final Clip clipBehavior;
   final TransformationController? transformationController;
   final double maxScale;
@@ -286,8 +288,16 @@ class PageFlipWidgetState extends State<PageFlipWidget>
         onPanEnd: (details) {},
         onTapCancel: () {},
         onHorizontalDragCancel: () => _isForward = null,
-        onHorizontalDragUpdate: (details) => _turnPage(details, dimens),
-        onHorizontalDragEnd: (details) => _onDragFinish(),
+        onHorizontalDragUpdate: (details) {
+          if (!widget.disableSwipe) {
+            _turnPage(details, dimens);
+          }
+        },
+        onHorizontalDragEnd: (details) {
+          if (!widget.disableSwipe) {
+            _onDragFinish();
+          }
+        },
         child: InteractiveViewer(
           maxScale: widget.maxScale,
           clipBehavior: widget.clipBehavior,
